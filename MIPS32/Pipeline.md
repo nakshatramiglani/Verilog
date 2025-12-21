@@ -1,19 +1,19 @@
 
 # INSTRUCTION CYCLE
-1) IF: instrction fetch <br>
+## 1) IF: instrction fetch <br>
 IR(instruction reg) <- Mem[PC];<br>
-NPC<-PC+1 
-2) ID: instrction decode, register fetch<br>
+NPC<-PC+1 <br>
+## 2)ID: instrction decode, register fetch<br>
 A <- Reg[IR[25:21]]<br>
 B <- Reg[IR[20:16]]<br>
-Imm <- sign extended IR[15:0] (extend the value to 32 bits by replicating the MSB and placing it on the left)
-3) EX: execution/address calc
+Imm <- sign extended IR[15:0] (extend the value to 32 bits by replicating the MSB and placing it on the left)<br>
+## 3)EX: execution/address calc
 - ALUOut <- A + Imm //LW R3, 100(A) <br>
 - ALUOut <- A func B //SUB R2, A, B<br>
 - ALUOut <- A func Imm //SUBI R2, A, Imm<br>
 - ALUOut <- NPC + Imm // BEQZ R2, Label<br>
 cond <- A op 0 //== or !=
-4) MEM: memory access/branch completion
+## 4) MEM: memory access/branch completion
 - Load: <br>
 PC <- NPC;<br>
 LMD <- Mem[ALUOut];
@@ -25,7 +25,7 @@ if (cond) PC <- ALUOut<br>
 else <t> Pc <- NPC
 - other instructions<br>
 Pc <- NPC
-5) WB: writeback
+## 5) WB: writeback
 - reg-reg instruction<br>
 Reg[IR[15:11]] <- ALUOut
 - reg-imm instruction <br>
