@@ -8,37 +8,40 @@ for example, EX_MEM
 for example, EX_MEM_IR: instruction reg stored in EX_MEM latch
 ## 1) IF: instrction fetch <br>
 IF_ID_IR <- Mem[PC];<br>
-if (EX_MEM_IR[opcode]==branch & EX_MEM_cond)<br><t>
+if (EX_MEM_IR[opcode]==branch & EX_MEM_cond)<br>
 IF_ID_NPC, PC <- EX_MEM_ALUOut<br>
-else<br><t>
-IF_ID_NPC = PC + 1;
-![Pipeline Diagram](images/instruction_fetch.png)
+else<br>
+IF_ID_NPC, PC = PC + 1;
 ## 2)ID: instrction decode, register fetch<br>
-A <- Reg[IR[25:21]]<br>
-B <- Reg[IR[20:16]]<br>
-Imm <- sign extended IR[15:0] (extend the value to 32 bits by replicating the MSB and placing it on the left)<br>
+ID_EX_A <- Reg[IF_ID_IR[25:21]]<br>
+ID_EX_B <- Reg[IF_ID_IR[20:16]]<br>
+ID_EX_NPC <- IF_ID_NPC<br>
+ID_EX_IR <- IF_ID_IR<br>
+Imm <- SignExtend(IF_ID_IR[15:0])<br>
 ## 3)EX: execution/address calc
-- ALUOut <- A + Imm //LW R3, 100(A) <br>
-- ALUOut <- A func B //SUB R2, A, B<br>
-- ALUOut <- A func Imm //SUBI R2, A, Imm<br>
-- ALUOut <- NPC + Imm // BEQZ R2, Label<br>
-cond <- A op 0 //== or !=
+EX_MEM_IR <- ID_EX_IR<br>
+- Load/Store: <br>
+EX_MEM_ALUOut <- ID_EX_A + ID_EX_Imm<br>
+EX_MEM_B <- ID_EX_B<br>
+- Reg-Reg: <br>
+EX_MEM_ALUOut <- ID_EX_A func ID_EX_B<br>
+- Reg-Imm: <br>
+EX_MEM_ALUOut <- ID_EX_A func ID_EX_Imm<br>
+- Branch: <br>
+EX_MEM_ALUOut <- ID_EX_NPC + ID_EX_Imm<br>
+EX_MEM_cond <- (ID_EX_A == 0)<br>
 ## 4) MEM: memory access/branch completion
+MEM_WB_IR <- EX_MEM_IR
 - Load: <br>
-PC <- NPC;<br>
-LMD <- Mem[ALUOut];
+MEM_WB_LMD <- Mem[EX_MEM_ALUOut];
 - Store: <br>
-PC <- NPC;<br>
-Mem[ALUOut] <- B;
-- branch<br>
-if (cond) PC <- ALUOut<br>
-else <t> Pc <- NPC
-- other instructions<br>
-Pc <- NPC
+Mem[EX_MEM_ALUOut] <- EX_MEM_B;
+- ALU:<br>
+MEM_WB_ALUOut <- EX_MEM_ALUOut;
 ## 5) WB: writeback
 - reg-reg instruction<br>
-Reg[IR[15:11]] <- ALUOut
+Reg[MEM_WB_IR[15:11]] <- MEM_WB_ALUOut
 - reg-imm instruction <br>
-Reg[IR[20:16]] <- ALUOut
+Reg[MEM_WB_IR[20:16]] <- MEM_WB_ALUOut
 - load instr<br>
-Reg[IR[20:16]] <- LMD
+Reg[MEM_WB_IR[20:16]] <- MEM_WB_LMD
