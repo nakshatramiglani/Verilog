@@ -7,9 +7,9 @@ for example, EX_MEM
 - every latch will have temporary registers stored in it<br>
 for example, EX_MEM_IR: instruction reg stored in EX_MEM latch
 ## 1) IF: instrction fetch <br>
-IF_ID_IR <- Mem[PC];<br>
 if (EX_MEM_IR[opcode]==branch & EX_MEM_cond)<br>
-IF_ID_NPC, PC <- EX_MEM_ALUOut<br>
+IF_ID_NPC, PC <- EX_MEM_ALUOut + 1<br>
+IF_ID_IR <- Mem[EX_MEM_ALUOut];<br>
 else<br>
 IF_ID_NPC, PC = PC + 1;
 ## 2)ID: instrction decode, register fetch<br>
@@ -17,7 +17,7 @@ ID_EX_A <- Reg[IF_ID_IR[25:21]]<br>
 ID_EX_B <- Reg[IF_ID_IR[20:16]]<br>
 ID_EX_NPC <- IF_ID_NPC<br>
 ID_EX_IR <- IF_ID_IR<br>
-Imm <- SignExtend(IF_ID_IR[15:0])<br>
+ID_EX_Imm <- SignExtend(IF_ID_IR[15:0])<br>
 ## 3)EX: execution/address calc
 EX_MEM_IR <- ID_EX_IR<br>
 - Load/Store: <br>
