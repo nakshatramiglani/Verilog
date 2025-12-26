@@ -26,7 +26,6 @@ module MIPS32_pipe(clk1, clk2);
     reg HALTED; //set after hlt is passed
     reg TAKEN_BRANCH; //req to diable instructions after branch
 
-
     //------------instruction fetch--------------------
     always @(posedge clk1) 
     if(HALTED == 0)
@@ -44,12 +43,17 @@ module MIPS32_pipe(clk1, clk2);
                 IF_ID_IR <= #2 Mem[PC];
                 IF_ID_NPC <= #2 PC + 1;
                 PC <= #2 PC + 1;
+                TAKEN_BRANCH <= #2 1'b0;
             end
+
+    $display("IF  | t=%0t PC=%0d IR=%h TAKEN_BRANCH=%b",
+         $time, PC, IF_ID_IR, TAKEN_BRANCH);
+
     end
-    
+     
     //----------instruction decode----------------------
     
-    always @(posedge clk1 ) 
+    always @(posedge clk2) 
     if(HALTED == 0)
     begin
         //if r1==0, assign 0 directly
@@ -77,15 +81,16 @@ module MIPS32_pipe(clk1, clk2);
             HLT: ID_EX_type <= #2 HALT;
             default: ID_EX_type <= #2 HALT;
         endcase 
+    $display("ID  | t=%0t IR=%h A=%0d B=%0d IMM=%0d TYPE=%b",
+         $time, ID_EX_IR, ID_EX_A, ID_EX_B, ID_EX_imm, ID_EX_type);
+
     end
 
     //-----------execution---------------------------
     always @(posedge clk1) 
-    if (HALTED==0)
     begin
         EX_MEM_IR <= #2 ID_EX_IR;
         EX_MEM_type <= #2 ID_EX_type;
-        TAKEN_BRANCH <= #2 0;
         case(ID_EX_type)
         RR_ALU: 
         begin
@@ -119,9 +124,12 @@ module MIPS32_pipe(clk1, clk2);
                 cond <= #2 (ID_EX_A == 0);
             end 
         endcase
+    $display("EX  | t=%0t IR=%h ALUOut=%0d TYPE=%b",
+         $time, EX_MEM_IR, EX_MEM_ALUOut, EX_MEM_type);
+
     end
     //-----------memory access------------------------
-    always @(posedge clk1 ) begin
+    always @(posedge clk2 ) begin
             MEM_WB_type <= #2 EX_MEM_type;
             MEM_WB_IR <= #2 EX_MEM_IR;
             case(EX_MEM_type)
@@ -130,6 +138,9 @@ module MIPS32_pipe(clk1, clk2);
                 Mem[EX_MEM_ALUOut] <= #2 EX_MEM_B;
             RM_ALU, RR_ALU: MEM_WB_ALUOut <= #2 EX_MEM_ALUOut;
             endcase
+        $display("MEM | t=%0t IR=%h ALUOut=%0d TYPE=%b",
+         $time, MEM_WB_IR, MEM_WB_ALUOut, MEM_WB_type);
+
     end
 
     //-----------writeback------------------------
@@ -139,7 +150,10 @@ module MIPS32_pipe(clk1, clk2);
             LOAD: Reg[MEM_WB_IR[20:16]] <= #2 MEM_WB_LMD;
             RM_ALU: Reg[MEM_WB_IR[20:16]] <= #2 MEM_WB_ALUOut;
             RR_ALU: Reg[MEM_WB_IR[15:11]] <= #2 MEM_WB_ALUOut;
-            HALT: HALTED <= 1'b1; 
+            HALT: HALTED <= #2 1'b1; 
             endcase
+        $display("WB  | t=%0t TYPE=%b IR=%h ALUOut=%0d",
+         $time, MEM_WB_type, MEM_WB_IR, MEM_WB_ALUOut);
+
     end
 endmodule;
