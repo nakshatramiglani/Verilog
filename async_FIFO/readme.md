@@ -149,8 +149,3 @@ Asynchronous FIFOs are commonly used in:
 * Icarus Verilog
 * GTKWave
 
----
-
-# License
-
-This project is intended for educational and research purposes. Feel free to use, modify, and extend the design for academic or personal projects.
